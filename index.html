@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بطاقات تعريف الأشخاص</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
+            padding:10px; /* تقليل الهوامش العامة */
+            direction:rtl; 
+            background-attachment: fixed;
+        }
+        .container { max-width: 100%; display:flex; flex-direction:column; gap:8px; /* تقليل الفراغ بين البطاقات */ }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15); 
+            backdrop-filter: blur(10px);
+            border-radius:12px; /* تقليل تفاصيل الزوايا */
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05); /* تقليل الظل */
+            display:flex; 
+            align-items:center; 
+            justify-content:space-between;
+            padding:7px 10px; /* تقليل الهوامش الداخلية */
+            position:relative; 
+            overflow:hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            /* تقليل حجم البطاقة */
+            font-size: 0.85em; 
+        }
+        .card:hover { 
+            transform:translateY(-1px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .info-section { display:flex; flex-direction:column; gap:3px; flex:1; }
+        .name-avatar { display:flex; align-items:center; gap:8px; } /* تقليل الفراغ */
+        .avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.3); }
+        .name { font-size:12px; font-weight:bold; color:#333; } /* تقليل حجم الخط */
+        .details { display:flex; gap:6px; font-size:10px; color:#555; margin-top:3px; } /* تقليل حجم الخط والفراغ */
+        .detail-item { 
+            background: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(5px);
+            padding:2px 5px; /* تقليل الحشو */
+            border-radius:8px; /* تقليل حجم الزوايا */
+            font-size: 0.9em; /* تقليل حجم الخط الداخلي */
+        }
+
+        .chart-section { display:flex; align-items:center; gap:8px; width:160px; justify-content:flex-end; } /* تقليل الفراغ والعرض */
+
+        .doughnut-container { width:50px; height:50px; } /* الحفاظ على الحجم */
+        .line-chart-container { width:100px; height:50px; } /* الحفاظ على الحجم */
+
+    </style>
+</head>
+<body>
+    <div class="container" id="cardsContainer"></div>
+
+    <script>
+        const peopleData = [
+            {id:1,name:"أحمد محمد",country:"الإمارات",joinDate:"2025-03-15",profit:"1250$",successRate:85,chartData:[10,30,20,50,40,60,50],type:"success"},
+            {id:2,name:"فاطمة علي",country:"السعودية",joinDate:"2025-01-22",profit:"980$",successRate:72,chartData:[50,40,60,30,70,20,80],type:"failure"},
+            {id:3,name:"محمد خالد",country:"مصر",joinDate:"2024-11-30",profit:"2100$",successRate:92,chartData:[15,35,25,55,45,65,55],type:"success"},
+            {id:4,name:"سارة حسن",country:"لبنان",joinDate:"2025-02-10",profit:"1750$",successRate:68,chartData:[60,50,70,40,80,30,90],type:"failure"}
+        ];
+
+        function formatDate(dateString){
+            const d=new Date(dateString);
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        }
+
+        function createCard(person){
+            const card=document.createElement('div'); card.className='card';
+
+            // Info Section
+            const infoSection=document.createElement('div'); infoSection.className='info-section';
+            const nameAvatar=document.createElement('div'); nameAvatar.className='name-avatar';
+            const avatar=document.createElement('img'); avatar.className='avatar';
+            avatar.src=`https://placehold.co/32x32/4CAF50/fff?text=${person.name.charAt(0)}`; /* تحديث حجم الصورة */
+            const nameEl=document.createElement('div'); nameEl.className='name'; nameEl.textContent=person.name;
+            nameAvatar.appendChild(avatar); nameAvatar.appendChild(nameEl);
+            infoSection.appendChild(nameAvatar);
+
+            const details=document.createElement('div'); details.className='details';
+            const join=document.createElement('div'); join.className='detail-item'; join.textContent=`انضم: ${formatDate(person.joinDate)}`;
+            const profit=document.createElement('div'); profit.className='detail-item'; profit.textContent=`ربح: ${person.profit}`;
+            const rate=document.createElement('div'); rate.className='detail-item'; rate.textContent=`نسبة: ${person.successRate}%`;
+            details.appendChild(join); details.appendChild(profit); details.appendChild(rate);
+            infoSection.appendChild(details);
+
+            // Chart Section
+            const chartSection=document.createElement('div'); chartSection.className='chart-section';
+            const doughnutCont=document.createElement('div'); doughnutCont.className='doughnut-container';
+            doughnutCont.innerHTML=`<canvas id="doughnut-${person.id}"></canvas>`;
+            const lineCont=document.createElement('div'); lineCont.className='line-chart-container';
+            lineCont.innerHTML=`<canvas id="line-${person.id}"></canvas>`;
+            chartSection.appendChild(doughnutCont); chartSection.appendChild(lineCont);
+
+            card.appendChild(infoSection); card.appendChild(chartSection);
+
+            // Charts
+            setTimeout(()=>{ createDoughnutChart(person.id,person.successRate,person.type); createLineChart(person.id,person.chartData,person.type); },100*person.id);
+
+            return card;
+        }
+
+        function createDoughnutChart(id,rate,type){
+            const ctx=document.getElementById(`doughnut-${id}`).getContext('2d');
+            const failure=100-rate;
+            new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[rate,failure],backgroundColor:[type==='success'?'#4caf50':'#f44336','#e0e0e0'],borderWidth:2}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:true,maintainAspectRatio:false}});
+        }
+
+        function createLineChart(id,data,type){
+            const ctx=document.getElementById(`line-${id}`).getContext('2d');
+            new Chart(ctx,{type:'line',data:{labels:data.map(()=>''),datasets:[{data:data,borderColor:type==='success'?'#4caf50':'#f44336',backgroundColor:type==='success'?'rgba(76,175,80,0.2)':'rgba(244,67,54,0.2)',borderWidth:2,pointRadius:0,fill:true,tension:0.5}]},options:{plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},responsive:true,maintainAspectRatio:false}});
+        }
+
+        function initializeCards(){
+            const container=document.getElementById('cardsContainer');
+            peopleData.forEach(p=>{ container.appendChild(createCard(p)); });
+        }
+
+        window.addEventListener('load',initializeCards);
+    </script>
+</body>
+</html>
