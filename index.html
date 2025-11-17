@@ -9,25 +9,24 @@
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { 
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); 
-            padding:10px; /* تقليل الهوامش العامة */
+            padding:10px;
             direction:rtl; 
             background-attachment: fixed;
         }
-        .container { max-width: 100%; display:flex; flex-direction:column; gap:8px; /* تقليل الفراغ بين البطاقات */ }
+        .container { max-width: 100%; display:flex; flex-direction:column; gap:8px; }
 
         .card {
             background: rgba(255, 255, 255, 0.15); 
             backdrop-filter: blur(10px);
-            border-radius:12px; /* تقليل تفاصيل الزوايا */
-            box-shadow: 0 3px 8px rgba(0,0,0,0.05); /* تقليل الظل */
+            border-radius:12px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.05);
             display:flex; 
             align-items:center; 
             justify-content:space-between;
-            padding:7px 10px; /* تقليل الهوامش الداخلية */
+            padding:7px 10px;
             position:relative; 
             overflow:hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            /* تقليل حجم البطاقة */
             font-size: 0.85em; 
         }
         .card:hover { 
@@ -36,22 +35,22 @@
         }
 
         .info-section { display:flex; flex-direction:column; gap:3px; flex:1; }
-        .name-avatar { display:flex; align-items:center; gap:8px; } /* تقليل الفراغ */
+        .name-avatar { display:flex; align-items:center; gap:8px; }
         .avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.3); }
-        .name { font-size:12px; font-weight:bold; color:#333; } /* تقليل حجم الخط */
-        .details { display:flex; gap:6px; font-size:10px; color:#555; margin-top:3px; } /* تقليل حجم الخط والفراغ */
+        .name { font-size:12px; font-weight:bold; color:#333; }
+        .details { display:flex; gap:6px; font-size:10px; color:#555; margin-top:3px; }
         .detail-item { 
             background: rgba(255, 255, 255, 0.25); 
             backdrop-filter: blur(5px);
-            padding:2px 5px; /* تقليل الحشو */
-            border-radius:8px; /* تقليل حجم الزوايا */
-            font-size: 0.9em; /* تقليل حجم الخط الداخلي */
+            padding:2px 5px;
+            border-radius:8px;
+            font-size: 0.9em;
         }
 
-        .chart-section { display:flex; align-items:center; gap:8px; width:160px; justify-content:flex-end; } /* تقليل الفراغ والعرض */
+        .chart-section { display:flex; align-items:center; gap:8px; width:160px; justify-content:flex-end; }
 
-        .doughnut-container { width:50px; height:50px; } /* الحفاظ على الحجم */
-        .line-chart-container { width:100px; height:50px; } /* الحفاظ على الحجم */
+        .doughnut-container { width:50px; height:50px; }
+        .line-chart-container { width:100px; height:50px; }
 
     </style>
 </head>
@@ -78,7 +77,7 @@
             const infoSection=document.createElement('div'); infoSection.className='info-section';
             const nameAvatar=document.createElement('div'); nameAvatar.className='name-avatar';
             const avatar=document.createElement('img'); avatar.className='avatar';
-            avatar.src=`https://placehold.co/32x32/4CAF50/fff?text=${person.name.charAt(0)}`; /* تحديث حجم الصورة */
+            avatar.src=`https://placehold.co/32x32/4CAF50/fff?text=${person.name.charAt(0)}`;
             const nameEl=document.createElement('div'); nameEl.className='name'; nameEl.textContent=person.name;
             nameAvatar.appendChild(avatar); nameAvatar.appendChild(nameEl);
             infoSection.appendChild(nameAvatar);
@@ -109,12 +108,77 @@
         function createDoughnutChart(id,rate,type){
             const ctx=document.getElementById(`doughnut-${id}`).getContext('2d');
             const failure=100-rate;
-            new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[rate,failure],backgroundColor:[type==='success'?'#4caf50':'#f44336','#e0e0e0'],borderWidth:2}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:true,maintainAspectRatio:false}});
+            // تهيئة المخطط ببيانات فارغة
+            const chart = new Chart(ctx,{
+                type:'doughnut',
+                data:{
+                    datasets:[{
+                        data:[0,100], // بداية من 0
+                        backgroundColor:[type==='success'?'#4caf50':'#f44336','#e0e0e0'],
+                        borderWidth:2
+                    }]
+                },
+                options:{
+                    cutout:'70%',
+                    plugins:{
+                        legend:{display:false},
+                        tooltip:{enabled:false}
+                    },
+                    responsive:true,
+                    maintainAspectRatio:false,
+                    animation: {
+                        animateRotate: true,
+                        duration: 1000, // مدة الرسوم (1 ثانية)
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+            // تحديث البيانات بعد قليل لبدء التأثير
+            setTimeout(()=>{
+                chart.data.datasets[0].data = [rate,failure];
+                chart.update();
+            }, 100);
         }
 
         function createLineChart(id,data,type){
             const ctx=document.getElementById(`line-${id}`).getContext('2d');
-            new Chart(ctx,{type:'line',data:{labels:data.map(()=>''),datasets:[{data:data,borderColor:type==='success'?'#4caf50':'#f44336',backgroundColor:type==='success'?'rgba(76,175,80,0.2)':'rgba(244,67,54,0.2)',borderWidth:2,pointRadius:0,fill:true,tension:0.5}]},options:{plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},responsive:true,maintainAspectRatio:false}});
+            // تهيئة المخطط ببيانات فارغة
+            const chart = new Chart(ctx,{
+                type:'line',
+                data:{
+                    labels: data.map(()=>''),
+                    datasets:[{
+                        data: new Array(data.length).fill(0), // بيانات فارغة في البداية
+                        borderColor: type==='success'?'#4caf50':'#f44336',
+                        backgroundColor: type==='success'?'rgba(76,175,80,0.2)':'rgba(244,67,54,0.2)',
+                        borderWidth:2,
+                        pointRadius:0,
+                        fill:true,
+                        tension:0.5
+                    }]
+                },
+                options:{
+                    plugins:{
+                        legend:{display:false},
+                        tooltip:{enabled:false}
+                    },
+                    scales:{
+                        x:{display:false},
+                        y:{display:false}
+                    },
+                    responsive:true,
+                    maintainAspectRatio:false,
+                    animation: {
+                        duration: 1200, // مدة الرسم (1.2 ثانية)
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+            // تحديث البيانات بعد قليل لرسم المنحنى
+            setTimeout(()=>{
+                chart.data.datasets[0].data = data;
+                chart.update();
+            }, 100);
         }
 
         function initializeCards(){
